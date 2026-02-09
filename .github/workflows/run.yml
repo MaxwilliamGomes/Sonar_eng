@@ -10,18 +10,17 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      # Variáveis de ambiente (Secrets do GitHub)
       DB_HOST: ${{ secrets.DB_HOST }}
       DB_USER: ${{ secrets.DB_USER }}
       DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
       DB_PORT: ${{ secrets.DB_PORT }}
       DB_NAME: ${{ secrets.DB_NAME }}
+      PROJECT_HOME: ${{ github.workspace }}
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Ajustado para Java 17 (Mais estável para o motor do Hop)
       - name: Set up Java
         uses: actions/setup-java@v3
         with:
@@ -33,7 +32,6 @@ jobs:
         with:
           python-version: '3.9'
 
-      # 1. Instalar o Apache Hop Client (Ajustado para 2.10.0)
       - name: Download and Install Apache Hop
         run: |
           wget https://archive.apache.org/dist/hop/2.10.0/apache-hop-client-2.10.0.zip
@@ -41,33 +39,41 @@ jobs:
           chmod +x hop_engine/hop/hop-run.sh
           chmod +x hop_engine/hop/hop-conf.sh
 
-      # 2. Baixar o Driver JDBC do Postgres
       - name: Install Postgres JDBC Driver
         run: |
           wget https://jdbc.postgresql.org/download/postgresql-42.7.1.jar
           cp postgresql-42.7.1.jar hop_engine/hop/lib/jdbc/
 
-      # 3. Registrar e Executar Ingestão com Apache Hop
-      - name: Register and Run Ingestion (Apache Hop)
+      - name: Configure Hop Project
         run: |
-          # A. Registrar o projeto (usando --project-create corretamente)
-          ./hop_engine/hop/hop-conf.sh \
-            --project=sonar_eng \
-            --project-create \
-            --project-home=${{ github.workspace }}
+          # Criar diretório de configuração do Hop
+          mkdir -p $HOME/.hop
+          
+          # Copiar metadados do projeto
+          cp -r metadata $HOME/.hop/
+          
+          # Atualizar sonar_eng.json com credenciais reais
+          sed -i "s|db.vjekjvwztahphnwtbkgp.supabase.co|${{ env.DB_HOST }}|g" $HOME/.hop/metadata/rdbms/sonar_eng.json
+          sed -i "s|Encrypted 2be98d4ca704c680bbbb16bd64d7|Encrypted ${{ env.DB_PASSWORD }}|g" $HOME/.hop/metadata/rdbms/sonar_eng.json
+          sed -i "s|5432|${{ env.DB_PORT }}|g" $HOME/.hop/metadata/rdbms/sonar_eng.json
+          sed -i "s|postgres|${{ env.DB_USER }}|g" $HOME/.hop/metadata/rdbms/sonar_eng.json
 
-          # B. Executar o workflow
+      - name: Run Apache Hop Workflow
+        run: |
           ./hop_engine/hop/hop-run.sh \
-            --project=sonar_eng \
-            --file=${{ github.workspace }}/hop/workflows/workflow_master.hwf \
-            --runconfig=local \
-            --parameters=DB_HOST=${{ env.DB_HOST }},DB_USER=${{ env.DB_USER }},DB_PASSWORD=${{ env.DB_PASSWORD }},DB_PORT=${{ env.DB_PORT }},DB_NAME=${{ env.DB_NAME }}
+            -f ${PROJECT_HOME}/hop/workflows/workflow_master.hwf \
+            -r local \
+            -p PROJECT_HOME=${PROJECT_HOME} \
+            -p DB_HOST=${{ env.DB_HOST }} \
+            -p DB_USER=${{ env.DB_USER }} \
+            -p DB_PASSWORD=${{ env.DB_PASSWORD }} \
+            -p DB_PORT=${{ env.DB_PORT }} \
+            -p DB_NAME=${{ env.DB_NAME }} \
+            -l Detailed
 
-      # 4. Instalar dbt
       - name: Install dbt
         run: pip install dbt-postgres
 
-      # 5. Executar Transformação (dbt)
       - name: dbt Build
         run: |
           cd Dbt_project
