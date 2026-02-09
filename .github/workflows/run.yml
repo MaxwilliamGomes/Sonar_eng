@@ -46,10 +46,16 @@ jobs:
           wget https://jdbc.postgresql.org/download/postgresql-42.7.1.jar
           cp postgresql-42.7.1.jar hop_engine/hop/lib/jdbc/
 
-      # 3. Executar Ingestão com Apache Hop
-      # 3. Executar Ingestão com Apache Hop
-      - name: Run Ingestion (Apache Hop)
+      # 3. Registrar e Executar Ingestão com Apache Hop
+      - name: Register and Run Ingestion (Apache Hop)
         run: |
+          # A. Registrar o projeto para que o motor saiba onde estão os metadados
+          ./hop_engine/hop/hop-conf.sh \
+            --project sonar_eng \
+            --project-home ${{ github.workspace }} \
+            --project-create
+
+          # B. Executar usando as flags corrigidas: --file (ou -f) e --runconfig (ou -r)
           ./hop_engine/hop/hop-run.sh \
             --project sonar_eng \
             --file ${{ github.workspace }}/hop/workflows/workflow_master.hwf \
