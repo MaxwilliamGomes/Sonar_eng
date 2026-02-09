@@ -7,7 +7,7 @@ SELECT
     sku,
     quantity,
     unit_price,
-    total_price,
+    quantity * unit_price as total_price,
     sale_date
 FROM {{ ref('silver_parts_sales') }}
 

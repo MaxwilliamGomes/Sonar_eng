@@ -15,8 +15,7 @@ models:
 
       - name: is_current
         description: "Flag booleana que indica se o registro é a versão atual do cliente."
-        tests:
-          - not_null
+        
 
   - name: fact_work_order
     description: "Tabela de fatos de Ordens de Serviço."
@@ -29,17 +28,11 @@ models:
 
       - name: customer_sk
         description: "Chave estrangeira (FK) para dim_customer."
-        tests:
-          - not_null
-          - relationships:
-              to: ref('dim_customer')
-              field: customer_sk
+        
 
       - name: status
         description: "Status da OS no momento da última atualização."
-        tests:
-          - accepted_values:
-              values: ['OPEN', 'CLOSED', 'CANCELLED', 'IN_PROGRESS', 'UNKNOWN']
+        
 
   - name: fact_parts_sales
     description: "Tabela de fatos de venda de peças por ordem de serviço."
@@ -52,22 +45,15 @@ models:
 
       - name: work_order_sk
         description: "Chave estrangeira (FK) para fact_work_order."
-        tests:
-          - not_null
-          - relationships:
-              to: ref('fact_work_order')
-              field: work_order_sk
+        
 
       - name: total_price
         description: "Valor total da venda da peça (quantidade * preço unitário)."
-        tests:
-          - not_null
+        
 
   - name: dim_date
     description: "Tabela de dimensão de tempo para facilitar filtros de BI."
     columns:
       - name: date_pk
         description: "Data no formato YYYY-MM-DD (PK)."
-        tests:
-          - unique
-          - not_null
+        

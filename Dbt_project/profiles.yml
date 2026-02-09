@@ -1,0 +1,12 @@
+Dbt_project:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      host: db.vjekjywztahphnwtbkgp.supabase.co
+      user: postgres
+      password: sonar_postgres
+      port: 5432
+      dbname: postgres
+      schema: public
+      threads: 1
