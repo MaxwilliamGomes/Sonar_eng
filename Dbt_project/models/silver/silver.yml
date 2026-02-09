@@ -1,0 +1,87 @@
+version: 2
+sources:
+  - name: public # Nome de referência para o dbt
+    schema: public # Esquema real no banco de dados
+    description: "Dados brutos carregados dos CSVs (Camada Bronze)"
+    tables:
+      - name: customers
+        description: "Dados brutos de clientes"
+      - name: work_orders
+        description: "Dados brutos de ordens de serviço"
+      - name: parts_sales
+        description: "Dados brutos de vendas de peças"
+        
+models:
+  - name: silver_customers
+    description: "Tabela de clientes limpa e deduplicada. O registro mais recente é mantido via created_at."
+    columns:
+      - name: customer_id
+        description: "Chave primária única do cliente."
+        tests:
+          - unique
+          - not_null
+
+      - name: segment
+        description: "Segmento do cliente (A, B, C). Valores nulos convertidos para 'UNKNOWN'."
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['A', 'B', 'C', 'UNKNOWN']
+
+      - name: state
+        description: "UF do cliente. Valores nulos convertidos para 'ND' (Não Declarado)."
+        tests:
+          - not_null
+
+  - name: silver_work_orders
+    description: "Ordens de serviço deduplicadas e padronizadas."
+    columns:
+      - name: work_order_id
+        description: "Chave primária da Ordem de Serviço."
+        tests:
+          - unique
+          - not_null
+
+      - name: customer_id
+        description: "FK para a tabela de clientes. Órfãos marcados como 'ORPHAN'."
+        tests:
+          - not_null
+          # Note: O teste de relationship falharia se houver 'ORPHAN', 
+          # a menos que você crie um registro dummy na dim_customer.
+
+      - name: status
+        description: "Status atual da ordem."
+        tests:
+          - accepted_values:
+              values: ['OPEN', 'CLOSED', 'CANCELLED', 'IN_PROGRESS', 'UNKNOWN']
+
+      - name: labor_hours
+        description: "Horas de mão de obra. Convertido nulo para 0."
+        tests:
+          - not_null
+
+  - name: silver_parts_sales
+    description: "Venda de peças individuais. O total_price é recalculado para garantir integridade."
+    columns:
+      - name: sale_id
+        description: "Chave primária da venda de peça."
+        tests:
+          - unique
+          - not_null
+
+      - name: work_order_id
+        description: "FK para a ordem de serviço correspondente."
+        tests:
+          - not_null
+
+      - name: total_price
+        description: "Preço total da venda (quantity * unit_price)."
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: ">= 0"
+
+      - name: sale_date
+        description: "Data da venda convertida para DateType."
+        tests:
+          - not_null

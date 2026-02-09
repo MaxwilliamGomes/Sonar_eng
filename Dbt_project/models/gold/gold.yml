@@ -1,0 +1,39 @@
+version: 2
+
+models:
+  - name: dim_customer
+    description: "Dimensão de Clientes (SCD Tipo 2). Contém o histórico completo de mudanças de segmento e estado."
+    columns:
+      - name: customer_sk
+        description: "Surrogate Key (PK) da dimensão cliente."
+        tests:
+          - unique
+          - not_null
+
+      - name: customer_id
+        description: "ID natural do cliente vindo do sistema de origem."
+
+      - name: is_current
+        description: "Flag booleana que indica se o registro é a versão atual do cliente."
+        tests:
+          - not_null
+
+  - name: fact_work_order
+    description: "Tabela de fatos de Ordens de Serviço."
+    columns:
+      - name: work_order_sk
+        description: "Surrogate Key (PK) da ordem de serviço."
+        tests:
+          - unique
+          - not_null
+
+      - name: customer_sk
+        description: "Chave estrangeira (FK) para dim_customer."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_customer')
+              field: customer_sk
+
+      - name: status
+        description: "Stat
