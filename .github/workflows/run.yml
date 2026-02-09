@@ -47,13 +47,13 @@ jobs:
           cp postgresql-42.7.1.jar hop_engine/hop/lib/jdbc/
 
       # 3. Executar Ingestão com Apache Hop
+      # 3. Executar Ingestão com Apache Hop
       - name: Run Ingestion (Apache Hop)
         run: |
           ./hop_engine/hop/hop-run.sh \
             --project sonar_eng \
-            --project-home ${{ github.workspace }} \
-            --workflow ${{ github.workspace }}/hop/workflows/workflow_master.hwf \
-            --environment default \
+            --file ${{ github.workspace }}/hop/workflows/workflow_master.hwf \
+            --runconfig local \
             -p DB_HOST=${{ env.DB_HOST }} \
             -p DB_USER=${{ env.DB_USER }} \
             -p DB_PASSWORD=${{ env.DB_PASSWORD }} \
