@@ -27,3 +27,5 @@ LEFT JOIN work_orders wo
     ON s.work_order_id = wo.natural_work_order_id
     AND CAST(s.sale_date AS TIMESTAMP) >= wo.valid_from 
     AND (CAST(s.sale_date AS TIMESTAMP) < wo.valid_to OR wo.valid_to IS NULL)
+
+

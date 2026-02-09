@@ -34,3 +34,4 @@ versioned_wo AS (
 )
 
 SELECT * FROM versioned_wo
+

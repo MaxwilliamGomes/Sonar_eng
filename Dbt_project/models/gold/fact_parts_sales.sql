@@ -10,3 +10,4 @@ SELECT
     total_price,
     sale_date
 FROM {{ ref('silver_parts_sales') }}
+
