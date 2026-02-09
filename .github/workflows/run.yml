@@ -39,6 +39,7 @@ jobs:
           wget https://archive.apache.org/dist/hop/2.10.0/apache-hop-client-2.10.0.zip
           unzip -q apache-hop-client-2.10.0.zip -d hop_engine
           chmod +x hop_engine/hop/hop-run.sh
+          chmod +x hop_engine/hop/hop-conf.sh
 
       # 2. Baixar o Driver JDBC do Postgres
       - name: Install Postgres JDBC Driver
@@ -49,22 +50,18 @@ jobs:
       # 3. Registrar e Executar Ingestão com Apache Hop
       - name: Register and Run Ingestion (Apache Hop)
         run: |
-          # A. Registrar o projeto para que o motor saiba onde estão os metadados
+          # A. Registrar o projeto (usando --project-create corretamente)
           ./hop_engine/hop/hop-conf.sh \
-            --project sonar_eng \
-            --project-home ${{ github.workspace }} \
-            --project-create
+            --project=sonar_eng \
+            --project-create \
+            --project-home=${{ github.workspace }}
 
-          # B. Executar usando as flags corrigidas: --file (ou -f) e --runconfig (ou -r)
+          # B. Executar o workflow
           ./hop_engine/hop/hop-run.sh \
-            --project sonar_eng \
-            --file ${{ github.workspace }}/hop/workflows/workflow_master.hwf \
-            --runconfig local \
-            -p DB_HOST=${{ env.DB_HOST }} \
-            -p DB_USER=${{ env.DB_USER }} \
-            -p DB_PASSWORD=${{ env.DB_PASSWORD }} \
-            -p DB_PORT=${{ env.DB_PORT }} \
-            -p DB_NAME=${{ env.DB_NAME }}
+            --project=sonar_eng \
+            --file=${{ github.workspace }}/hop/workflows/workflow_master.hwf \
+            --runconfig=local \
+            --parameters=DB_HOST=${{ env.DB_HOST }},DB_USER=${{ env.DB_USER }},DB_PASSWORD=${{ env.DB_PASSWORD }},DB_PORT=${{ env.DB_PORT }},DB_NAME=${{ env.DB_NAME }}
 
       # 4. Instalar dbt
       - name: Install dbt
